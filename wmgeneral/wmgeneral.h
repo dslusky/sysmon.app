@@ -40,6 +40,7 @@ int CheckMouseRegion(int x, int y);
 void openXwindow(int argc, char *argv[], char **, char *, int, int);
 void RedrawWindow(void);
 void RedrawWindowXY(int x, int y);
+void RedrawRegion(int x, int y, int width, int height);
 
 void copyXPMArea(int, int, int, int, int, int);
 void copyXBMArea(int, int, int, int, int, int);
