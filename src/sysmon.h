@@ -19,11 +19,21 @@
 #ifndef __SYSMON_H__
 #define __SYSMON_H__
 
+typedef struct {
+    struct {
+        long int active;
+        long int idle;
+        long int total;
+    } cpu;
+} stat_t;
+
 enum {
     STATS_CPU,
     STATS_MEM,
     STATS_IO
 };
+
+#define PROC_STATS "/proc/stat"
 
 #define WIN_WIDTH  64
 #define WIN_HEIGHT 64

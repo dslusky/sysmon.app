@@ -20,6 +20,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <error.h>
+#include <errno.h>
 
 #include <X11/Xlib.h>
 #include <X11/xpm.h>
@@ -31,7 +33,7 @@
 #include "sysmon-master.xpm"
 #include "sysmon-mask.xbm"
 
-unsigned int stats[3];
+stat_t current, last;
 
 void createWindow(int argc, char *argv[]);
 void refreshDisplay(void);
@@ -86,15 +88,34 @@ void drawMeter(int x, int y, int amount) {
 
 
 /* ========================================================================
- = UPDATE_STATS
+ = UPDATE_CPU_STATS
  =
  = Gather system stats and update display
  ======================================================================= */
 
-void updateStats() {
-    drawMeter(CPU_METER_X, CPU_METER_Y, stats[STATS_CPU]);
-    drawMeter(MEM_METER_X, MEM_METER_Y, stats[STATS_MEM]);
-    drawMeter(IO_METER_X, IO_METER_Y, stats[STATS_IO]);
+void updateCpuStats() {
+    long int user, nice, sys, idle;
+
+    FILE *statFile;
+
+    if ((statFile = fopen(PROC_STATS, "ro")) == NULL) {
+        fprintf(stderr, "Cannot open '%s' for reading: %s\n", PROC_STATS, strerror(errno));
+        exit(1);
+    }
+
+    fscanf(statFile, "cpu %ld %ld %ld %ld", &user, &nice, &sys, &idle);
+    fclose(statFile);
+
+    memcpy(&last, &current, sizeof(current));
+    current.cpu.active = (user + nice + sys);
+    current.cpu.idle = idle;
+    current.cpu.total = current.cpu.active + current.cpu.idle;
+
+    long int dt = MAX(1, current.cpu.total - last.cpu.total);
+    long int da = MAX(1, current.cpu.active - last.cpu.active);
+    long int usage = da*100 / dt;
+
+    drawMeter(CPU_METER_X, CPU_METER_Y, usage);
 }
 
 
@@ -107,13 +128,14 @@ void updateStats() {
 int main(int argc, char *argv[]) {
     XEvent Event;
 
-    memset(stats, 0, sizeof(stats));
+    memset(&current, 0, sizeof(stat_t));
+    memset(&last, 0, sizeof(stat_t));
 
     createWindow(argc, argv);
     refreshDisplay();
 
     while (1) {
-        updateStats();
+        updateCpuStats();
         while (XPending(display)) {
             XNextEvent(display, &Event);
             switch (Event.type) {
@@ -130,6 +152,7 @@ int main(int argc, char *argv[]) {
             }
         }
         usleep(250000L);
+        // usleep(1000000L);
     }
     return 0;
 }
