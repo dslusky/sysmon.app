@@ -1,34 +1,20 @@
-/* Generic single linked list to keep various information
-   Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+/*
+    Sysmon.app - system monitoring dockapp for WindowMaker
+    Copyright (C) 2018  David Slusky
 
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-Author: Kresten Krab Thorup
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-Many modifications by Alfredo K. Kojima
-
-
-This file is part of GNU CC.
-
-GNU CC is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
-
-GNU CC is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with GNU CC; see the file COPYING.  If not, write to
-the Free Software Foundation, 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
-
-/* As a special exception, if you link this library with files compiled with
-   GCC to produce an executable, this does not cause the resulting executable
-   to be covered by the GNU General Public License. This exception does not
-   however invalidate any other reasons why the executable file might be
-   covered by the GNU General Public License.  */
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 
 #include "list.h"
 #ifdef HAVE_SYS_TYPES_H

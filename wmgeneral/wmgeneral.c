@@ -1,24 +1,19 @@
 /*
-	Best viewed with vim5, using ts=4
+    Sysmon.app - system monitoring dockapp for WindowMaker
+    Copyright (C) 2018  David Slusky
 
-	wmgeneral was taken from wmppp.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	It has a lot of routines which most of the wm* programs use.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	------------------------------------------------------------
-
-	Author: Martijn Pieterse (pieterse@xs4all.nl)
-
-	---
-	CHANGES:
-	---
-	02/05/1998 (Martijn Pieterse, pieterse@xs4all.nl)
-		* changed the read_rc_file to parse_rcfile, as suggester by Marcelo E. Magallon
-		* debugged the parse_rc file.
-	30/04/1998 (Martijn Pieterse, pieterse@xs4all.nl)
-		* Ripped similar code from all the wm* programs,
-		  and put them in a single file.
-
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <stdlib.h>
