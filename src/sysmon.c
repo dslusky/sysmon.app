@@ -33,11 +33,10 @@
 #include "sysmon-master.xpm"
 #include "sysmon-mask.xbm"
 
-stat_t current, last;
-
 void createWindow(int argc, char *argv[]);
 void refreshDisplay(void);
 void drawMeter(int x, int y, int amount);
+void updateCpuMeter(cpu_stat_t *current, cpu_stat_t *last);
 
 
 /* ========================================================================
@@ -88,14 +87,13 @@ void drawMeter(int x, int y, int amount) {
 
 
 /* ========================================================================
- = UPDATE_CPU_STATS
+ = UPDATE_CPU_METER
  =
- = Gather system stats and update display
+ = Gather CPU stats and update meter
  ======================================================================= */
 
-void updateCpuStats() {
+void updateCpuMeter(cpu_stat_t *current, cpu_stat_t *last) {
     long int user, nice, sys, idle;
-
     FILE *statFile;
 
     if ((statFile = fopen(PROC_STATS, "ro")) == NULL) {
@@ -106,13 +104,12 @@ void updateCpuStats() {
     fscanf(statFile, "cpu %ld %ld %ld %ld", &user, &nice, &sys, &idle);
     fclose(statFile);
 
-    memcpy(&last, &current, sizeof(current));
-    current.cpu.active = (user + nice + sys);
-    current.cpu.idle = idle;
-    current.cpu.total = current.cpu.active + current.cpu.idle;
+    current->active = (user + nice + sys);
+    current->idle = idle;
+    current->total = current->active + current->idle;
 
-    long int dt = MAX(1, current.cpu.total - last.cpu.total);
-    long int da = MAX(1, current.cpu.active - last.cpu.active);
+    long int dt = MAX(1, current->total - last->total);
+    long int da = MAX(1, current->active - last->active);
     long int usage = da*100 / dt;
 
     drawMeter(CPU_METER_X, CPU_METER_Y, usage);
@@ -127,15 +124,18 @@ void updateCpuStats() {
 
 int main(int argc, char *argv[]) {
     XEvent Event;
+    stat_t current, last;
 
-    memset(&current, 0, sizeof(stat_t));
-    memset(&last, 0, sizeof(stat_t));
+    memset(&current, 0, sizeof(current));
+    memset(&last, 0, sizeof(last));
 
     createWindow(argc, argv);
     refreshDisplay();
 
     while (1) {
-        updateCpuStats();
+        memcpy(&last, &current, sizeof(current));
+        updateCpuMeter(&current.cpu, &last.cpu);
+
         while (XPending(display)) {
             XNextEvent(display, &Event);
             switch (Event.type) {
@@ -152,7 +152,6 @@ int main(int argc, char *argv[]) {
             }
         }
         usleep(250000L);
-        // usleep(1000000L);
     }
     return 0;
 }

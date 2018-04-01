@@ -20,11 +20,13 @@
 #define __SYSMON_H__
 
 typedef struct {
-    struct {
-        long int active;
-        long int idle;
-        long int total;
-    } cpu;
+    long int active;
+    long int idle;
+    long int total;
+} cpu_stat_t;
+
+typedef struct {
+    cpu_stat_t cpu;
 } stat_t;
 
 enum {
