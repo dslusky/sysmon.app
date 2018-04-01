@@ -35,7 +35,8 @@ enum {
     STATS_IO
 };
 
-#define PROC_STATS "/proc/stat"
+#define PROC_STATS   "/proc/stat"
+#define PROC_MEMINFO "/proc/meminfo"
 
 #define WIN_WIDTH  64
 #define WIN_HEIGHT 64

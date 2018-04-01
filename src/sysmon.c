@@ -37,6 +37,7 @@ void createWindow(int argc, char *argv[]);
 void refreshDisplay(void);
 void drawMeter(int x, int y, int amount);
 void updateCpuMeter(cpu_stat_t *current, cpu_stat_t *last);
+void updateMemMeter();
 
 
 /* ========================================================================
@@ -94,25 +95,79 @@ void drawMeter(int x, int y, int amount) {
 
 void updateCpuMeter(cpu_stat_t *current, cpu_stat_t *last) {
     long int user, nice, sys, idle;
-    FILE *statFile;
+    long int dt, da, usage;
+    FILE *procFile;
 
-    if ((statFile = fopen(PROC_STATS, "ro")) == NULL) {
+    if ((procFile = fopen(PROC_STATS, "r")) == NULL) {
         fprintf(stderr, "Cannot open '%s' for reading: %s\n", PROC_STATS, strerror(errno));
         exit(1);
     }
 
-    fscanf(statFile, "cpu %ld %ld %ld %ld", &user, &nice, &sys, &idle);
-    fclose(statFile);
+    fscanf(procFile, "cpu %ld %ld %ld %ld", &user, &nice, &sys, &idle);
+    fclose(procFile);
 
+    memcpy(last, current, sizeof(cpu_stat_t));
     current->active = (user + nice + sys);
     current->idle = idle;
     current->total = current->active + current->idle;
 
-    long int dt = MAX(1, current->total - last->total);
-    long int da = MAX(1, current->active - last->active);
-    long int usage = da*100 / dt;
+    dt = MAX(1, current->total - last->total);
+    da = MAX(0, current->active - last->active);
+    usage = da*100 / dt;
 
     drawMeter(CPU_METER_X, CPU_METER_Y, usage);
+}
+
+
+/* ========================================================================
+ = UPDATE_MEM_METER
+ =
+ = Gather memory stats and update meter
+ ======================================================================= */
+
+void updateMemMeter() {
+    long int total = -1, active = -1, unused = -1, buffers = -1, cached = -1;
+    FILE *procFile;
+    char buf[128];
+
+    if ((procFile = fopen(PROC_MEMINFO, "r")) == NULL) {
+        fprintf(stderr, "Cannot open '%s' for reading: %s\n", PROC_MEMINFO, strerror(errno));
+        exit(1);
+    }
+
+    while (fgets(buf, sizeof(buf), procFile) != NULL) {
+        char *token;
+
+        if ((token = strtok(buf, " ")) == NULL)
+            continue;
+
+        if (!strncmp(token, "MemTotal:", 9)) {
+            token = strtok(NULL, " ");
+            total = MAX(1, atoi(token));
+        }
+        else if (!strncmp(token, "MemFree:", 8)) {
+            token = strtok(NULL, " ");
+            unused = MAX(0, atoi(token));
+        }
+        else if (!strncmp(token, "Buffers:", 8)) {
+            token = strtok(NULL, " ");
+            buffers = MAX(0, atoi(token));
+        }
+        else if (!strncmp(token, "Cached:", 7)) {
+            token = strtok(NULL, " ");
+            cached = MAX(0, atoi(token));
+        }
+    }
+
+    fclose(procFile);
+
+    if (total == -1 || unused == -1 || buffers == -1 || cached == -1) {
+        fprintf(stderr, "Failed to read required fields from '%s'!\n", PROC_MEMINFO);
+        exit(1);
+    }
+
+    active = total - (unused + buffers + cached);
+    drawMeter(MEM_METER_X, MEM_METER_Y, (active*100 / total));
 }
 
 
@@ -133,8 +188,8 @@ int main(int argc, char *argv[]) {
     refreshDisplay();
 
     while (1) {
-        memcpy(&last, &current, sizeof(current));
         updateCpuMeter(&current.cpu, &last.cpu);
+        updateMemMeter();
 
         while (XPending(display)) {
             XNextEvent(display, &Event);
