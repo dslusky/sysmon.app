@@ -26,7 +26,13 @@ typedef struct {
 } cpu_stat_t;
 
 typedef struct {
+    long int weighted;
+    long int max;
+} io_stat_t;
+
+typedef struct {
     cpu_stat_t cpu;
+    io_stat_t io;
 } stat_t;
 
 enum {
@@ -35,8 +41,9 @@ enum {
     STATS_IO
 };
 
-#define PROC_STATS   "/proc/stat"
-#define PROC_MEMINFO "/proc/meminfo"
+#define PROC_STATS     "/proc/stat"
+#define PROC_MEMINFO   "/proc/meminfo"
+#define PROC_DISKSTATS "/proc/diskstats"
 
 #define WIN_WIDTH  64
 #define WIN_HEIGHT 64

@@ -38,6 +38,7 @@ void refreshDisplay(void);
 void drawMeter(int x, int y, int amount);
 void updateCpuMeter(cpu_stat_t *current, cpu_stat_t *last);
 void updateMemMeter();
+void updateIoMeter(io_stat_t *current, io_stat_t *last);
 
 
 /* ========================================================================
@@ -172,6 +173,51 @@ void updateMemMeter() {
 
 
 /* ========================================================================
+ = UPDATE_IO_METER
+ =
+ = Gather disk IO stats and update meter
+ ======================================================================= */
+
+void updateIoMeter(io_stat_t *current, io_stat_t *last) {
+    FILE *procFile;
+    char buf[128];
+    long int delta;
+
+    if ((procFile = fopen(PROC_DISKSTATS, "r")) == NULL) {
+        fprintf(stderr, "Cannot open '%s' for reading: %s\n", PROC_DISKSTATS, strerror(errno));
+        exit(1);
+    }
+
+    // TODO: allow user to specify disk(s) to monitor
+    memcpy(last, current, sizeof(io_stat_t));
+    memset(current, 0, sizeof(io_stat_t));
+    while (fgets(buf, sizeof(buf), procFile) != NULL) {
+        char *token;
+
+        if ((token = strtok(buf, " ")) == NULL) continue; // major
+        if ((token = strtok(NULL, " ")) == NULL) continue; // minor
+        if ((token = strtok(NULL, " ")) == NULL) continue; // device
+
+        if (!strncmp(token, "sd", 2) && strlen(token) == 3) {
+            for (int i = 0; i < 11; i++)
+                if ((token = strtok(NULL, " ")) == NULL) break;
+            current->weighted += MAX(0, atoi(token));
+        }
+    }
+
+    fclose(procFile);
+
+    // max was reset, wait until enough data has been cycled through
+    if (current->max == -1 || last->max == -1) return;
+
+    delta = current->weighted - last->weighted;
+    current->max = MAX(1, delta > last->max ? delta : last->max);
+
+    drawMeter(IO_METER_X, IO_METER_Y, delta*100 / current->max);
+}
+
+
+/* ========================================================================
  = MAIN
  =
  = You have entered a maze of twisty passages, all alike
@@ -184,12 +230,15 @@ int main(int argc, char *argv[]) {
     memset(&current, 0, sizeof(current));
     memset(&last, 0, sizeof(last));
 
+    current.io.max = -1; // signal that max has been reset
+
     createWindow(argc, argv);
     refreshDisplay();
 
     while (1) {
         updateCpuMeter(&current.cpu, &last.cpu);
         updateMemMeter();
+        updateIoMeter(&current.io, &last.io);
 
         while (XPending(display)) {
             XNextEvent(display, &Event);
