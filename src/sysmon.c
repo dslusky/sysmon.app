@@ -118,7 +118,7 @@ void drawLoadAvg(loadavg_t *loadavg) {
             LOADAVG_WIDTH, height, LOADAVG_DST_X+i, y);
     }
 
-    RedrawRegion(5, 5, 54, 54);
+    RedrawRegion(VIEW_DST_X, VIEW_DST_Y, VIEW_WIDTH, VIEW_HEIGHT);
 }
 
 
