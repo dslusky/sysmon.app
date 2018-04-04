@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 #include <error.h>
 #include <errno.h>
@@ -36,9 +37,11 @@
 void createWindow(int argc, char *argv[]);
 void refreshDisplay(void);
 void drawMeter(int x, int y, int amount);
+void drawLoadAvg(loadavg_t *loadavg);
 void updateCpuMeter(cpu_stat_t *current, cpu_stat_t *last);
 void updateMemMeter();
 void updateIoMeter(io_stat_t *current, io_stat_t *last);
+void updateLoadMeter(loadavg_t *loadavg);
 
 
 /* ========================================================================
@@ -85,6 +88,37 @@ void drawMeter(int x, int y, int amount) {
     copyXPMArea(METER_BG_X, METER_BG_Y, METER_WIDTH, METER_HEIGHT, x, y);
     copyXPMArea(METER_FG_X, METER_FG_Y, amount*METER_WIDTH/100, METER_HEIGHT, x, y);
     RedrawRegion(x, y, METER_WIDTH, METER_HEIGHT);
+}
+
+
+/* ========================================================================
+ = DRAW_LOADAVG
+ =
+ = Display load average graph
+ ======================================================================= */
+
+void drawLoadAvg(loadavg_t *loadavg) {
+    float max = 1.0F;
+
+    // find highest value for scale
+    for (int i = 0; i < LOAD_HIST_LEN; i++)
+        if (loadavg->history[i] > max) max = loadavg->history[i];
+
+    // clear graph area
+    for (int i = 0; i < LOADAVG_HEIGHT; i++)
+        copyXPMArea(VIEW_BG_X, VIEW_BG_Y, VIEW_WIDTH, 1, VIEW_DST_X, LOADAVG_DST_Y+i);
+
+    // draw updated graph
+    for (int i = 0; i < LOAD_HIST_LEN; i++) {
+        int index = loadavg->isWrapped ? (loadavg->index+i) % LOAD_HIST_LEN : i;
+        int height = (int)(loadavg->history[index] / max * LOADAVG_HEIGHT);
+        int y = LOADAVG_DST_Y + LOADAVG_HEIGHT - height;
+
+        copyXPMArea(LOADAVG_SRC_X, LOADAVG_SRC_Y,
+            LOADAVG_WIDTH, height, LOADAVG_DST_X+i, y);
+    }
+
+    RedrawRegion(5, 5, 54, 54);
 }
 
 
@@ -218,6 +252,35 @@ void updateIoMeter(io_stat_t *current, io_stat_t *last) {
 
 
 /* ========================================================================
+ = UPDATE_LOAD_METER
+ =
+ = Gather load average stats and update meter
+ ======================================================================= */
+
+void updateLoadMeter(loadavg_t *loadavg) {
+    FILE *procFile;
+    float value;
+
+    if ((procFile = fopen(PROC_LOADAVG, "r")) == NULL) {
+        fprintf(stderr, "Cannot open '%s' for reading: %s\n", PROC_LOADAVG, strerror(errno));
+        exit(1);
+    }
+
+    fscanf(procFile, "%f", &value);
+    fclose(procFile);
+
+    loadavg->history[loadavg->index++] = value;
+
+    if (loadavg->index >= LOAD_HIST_LEN) {
+        loadavg->index = 0;
+        loadavg->isWrapped = 1;
+    }
+
+    drawLoadAvg(loadavg);
+}
+
+
+/* ========================================================================
  = MAIN
  =
  = You have entered a maze of twisty passages, all alike
@@ -226,9 +289,12 @@ void updateIoMeter(io_stat_t *current, io_stat_t *last) {
 int main(int argc, char *argv[]) {
     XEvent Event;
     stat_t current, last;
+    loadavg_t loadavg;
+    time_t now;
 
     memset(&current, 0, sizeof(current));
     memset(&last, 0, sizeof(last));
+    memset(&loadavg, 0, sizeof(loadavg));
 
     current.io.max = -1; // signal that max has been reset
 
@@ -239,6 +305,12 @@ int main(int argc, char *argv[]) {
         updateCpuMeter(&current.cpu, &last.cpu);
         updateMemMeter();
         updateIoMeter(&current.io, &last.io);
+
+        now = time(NULL);
+        if ((now - loadavg.lastUpdate) > LOADAVG_INTERVAL) {
+            updateLoadMeter(&loadavg);
+            loadavg.lastUpdate = now;
+        }
 
         while (XPending(display)) {
             XNextEvent(display, &Event);

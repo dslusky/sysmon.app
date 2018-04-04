@@ -19,6 +19,8 @@
 #ifndef __SYSMON_H__
 #define __SYSMON_H__
 
+#define LOAD_HIST_LEN 52
+
 typedef struct {
     long int active;
     long int idle;
@@ -29,6 +31,13 @@ typedef struct {
     long int weighted;
     long int max;
 } io_stat_t;
+
+typedef struct {
+    float history[LOAD_HIST_LEN];
+    int index;
+    int isWrapped;
+    time_t lastUpdate;
+} loadavg_t;
 
 typedef struct {
     cpu_stat_t cpu;
@@ -44,9 +53,19 @@ enum {
 #define PROC_STATS     "/proc/stat"
 #define PROC_MEMINFO   "/proc/meminfo"
 #define PROC_DISKSTATS "/proc/diskstats"
+#define PROC_LOADAVG   "/proc/loadavg"
 
 #define WIN_WIDTH  64
 #define WIN_HEIGHT 64
+
+#define VIEW_BG_X   1
+#define VIEW_BG_Y   91
+#define VIEW_SRC_X  5
+#define VIEW_SRC_Y  5
+#define VIEW_DST_X  5
+#define VIEW_DST_Y  5
+#define VIEW_WIDTH  54
+#define VIEW_HEIGHT 54
 
 #define CPU_SRC_X   1
 #define CPU_SRC_Y   74
@@ -88,6 +107,15 @@ enum {
 #define SPACER_DST_Y  37
 #define SPACER_WIDTH  54
 #define SPACER_HEIGHT 1
+
+#define LOADAVG_SRC_X    63
+#define LOADAVG_SRC_Y    71
+#define LOADAVG_SRC_H    27
+#define LOADAVG_DST_X    6
+#define LOADAVG_DST_Y    39
+#define LOADAVG_WIDTH    1
+#define LOADAVG_HEIGHT   19
+#define LOADAVG_INTERVAL 10
 
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))
 #define MAX(a, b)  (((a) > (b)) ? (a) : (b))
