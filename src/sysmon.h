@@ -19,7 +19,11 @@
 #ifndef __SYSMON_H__
 #define __SYSMON_H__
 
-#define LOAD_HIST_LEN 52
+#ifdef SIZE_SMALL
+#  define LOAD_HIST_LEN 48
+#else
+#  define LOAD_HIST_LEN 52
+#endif
 
 typedef struct {
     long int active;
@@ -55,8 +59,13 @@ enum {
 #define PROC_DISKSTATS "/proc/diskstats"
 #define PROC_LOADAVG   "/proc/loadavg"
 
-#define WIN_WIDTH  64
-#define WIN_HEIGHT 64
+#ifdef SIZE_SMALL
+#  define WIN_WIDTH  60
+#  define WIN_HEIGHT 60
+#else
+#  define WIN_WIDTH  64
+#  define WIN_HEIGHT 64
+#endif
 
 #define VIEW_BG_X   1
 #define VIEW_BG_Y   91
@@ -64,8 +73,14 @@ enum {
 #define VIEW_SRC_Y  5
 #define VIEW_DST_X  5
 #define VIEW_DST_Y  5
-#define VIEW_WIDTH  54
-#define VIEW_HEIGHT 54
+
+#ifdef SIZE_SMALL
+#  define VIEW_WIDTH  50
+#  define VIEW_HEIGHT 50
+#else
+#  define VIEW_WIDTH  54
+#  define VIEW_HEIGHT 54
+#endif
 
 #define CPU_SRC_X   1
 #define CPU_SRC_Y   74
@@ -98,24 +113,46 @@ enum {
 #define METER_BG_Y   82
 #define METER_FG_X   1
 #define METER_FG_Y   82
-#define METER_WIDTH  30
-#define METER_HEIGHT 7
 
-#define SPACER_SRC_X  0
+#ifdef SIZE_SMALL
+#  define METER_WIDTH  26
+#  define METER_HEIGHT 7
+#else
+#  define METER_WIDTH  30
+#  define METER_HEIGHT 7
+#endif
+
+#define SPACER_SRC_X  1
 #define SPACER_SRC_Y  90
-#define SPACER_DST_X  5
-#define SPACER_DST_Y  37
-#define SPACER_WIDTH  54
-#define SPACER_HEIGHT 1
 
-#define LOADAVG_SRC_X    63
-#define LOADAVG_SRC_Y    71
-#define LOADAVG_SRC_H    27
-#define LOADAVG_DST_X    6
-#define LOADAVG_DST_Y    39
+#ifdef SIZE_SMALL
+#  define SPACER_DST_X  6
+#  define SPACER_DST_Y  27
+#  define SPACER_WIDTH  48
+#  define SPACER_HEIGHT 1
+#else
+#  define SPACER_DST_X  6
+#  define SPACER_DST_Y  37
+#  define SPACER_WIDTH  52
+#  define SPACER_HEIGHT 1
+#endif
+
 #define LOADAVG_WIDTH    1
-#define LOADAVG_HEIGHT   19
 #define LOADAVG_INTERVAL 10
+
+#ifdef SIZE_SMALL
+#  define LOADAVG_SRC_X    63
+#  define LOADAVG_SRC_Y    65
+#  define LOADAVG_DST_X    6
+#  define LOADAVG_DST_Y    29
+#  define LOADAVG_HEIGHT   25
+#else
+#  define LOADAVG_SRC_X    63
+#  define LOADAVG_SRC_Y    71
+#  define LOADAVG_DST_X    6
+#  define LOADAVG_DST_Y    39
+#  define LOADAVG_HEIGHT   19
+#endif
 
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))
 #define MAX(a, b)  (((a) > (b)) ? (a) : (b))

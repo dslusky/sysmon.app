@@ -31,8 +31,13 @@
 #include "sysmon.h"
 #include "wmgeneral.h"
 
-#include "sysmon-master.xpm"
-#include "sysmon-mask.xbm"
+#ifdef SIZE_SMALL
+#  include "sysmon-small-master.xpm"
+#  include "sysmon-small-mask.xbm"
+#else
+#  include "sysmon-master.xpm"
+#  include "sysmon-mask.xbm"
+#endif
 
 void createWindow(int argc, char *argv[]);
 void refreshDisplay(void);
@@ -51,8 +56,13 @@ void updateLoadMeter(loadavg_t *loadavg);
  ======================================================================= */
 
 void createWindow(int argc, char *argv[]) {
+#ifdef SIZE_SMALL
+    openXwindow(argc, argv,
+        sysmon_small_master_xpm, sysmon_small_mask_bits, WIN_WIDTH, WIN_HEIGHT);
+#else
     openXwindow(argc, argv,
         sysmon_master_xpm, sysmon_mask_bits, WIN_WIDTH, WIN_HEIGHT);
+#endif
     setMaskXY(0, 0);
 }
 
@@ -66,11 +76,14 @@ void createWindow(int argc, char *argv[]) {
 void refreshDisplay(void) {
     copyXPMArea(CPU_SRC_X, CPU_SRC_Y, CPU_WIDTH, CPU_HEIGHT, CPU_DST_X, CPU_DST_Y);
     copyXPMArea(MEM_SRC_X, MEM_SRC_Y, MEM_WIDTH, MEM_HEIGHT, MEM_DST_X, MEM_DST_Y);
-    copyXPMArea(IO_SRC_X, IO_SRC_Y, IO_WIDTH, IO_HEIGHT, IO_DST_X, IO_DST_Y);
 
     copyXPMArea(METER_BG_X, METER_BG_Y, METER_WIDTH, METER_HEIGHT, CPU_DST_X+CPU_WIDTH+3, CPU_DST_Y);
     copyXPMArea(METER_BG_X, METER_BG_Y, METER_WIDTH, METER_HEIGHT, MEM_DST_X+MEM_WIDTH+3, MEM_DST_Y);
+
+#ifndef SIZE_SMALL
+    copyXPMArea(IO_SRC_X, IO_SRC_Y, IO_WIDTH, IO_HEIGHT, IO_DST_X, IO_DST_Y);
     copyXPMArea(METER_BG_X, METER_BG_Y, METER_WIDTH, METER_HEIGHT, IO_DST_X+IO_WIDTH+3, IO_DST_Y);
+#endif
 
     copyXPMArea(SPACER_SRC_X, SPACER_SRC_Y, SPACER_WIDTH, SPACER_HEIGHT, SPACER_DST_X, SPACER_DST_Y);
     RedrawWindow();
@@ -304,7 +317,9 @@ int main(int argc, char *argv[]) {
     while (1) {
         updateCpuMeter(&current.cpu, &last.cpu);
         updateMemMeter();
+#ifndef SIZE_SMALL
         updateIoMeter(&current.io, &last.io);
+#endif
 
         now = time(NULL);
         if ((now - loadavg.lastUpdate) > LOADAVG_INTERVAL) {

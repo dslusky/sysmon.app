@@ -316,8 +316,13 @@ void openXwindow(int argc, char *argv[], char *pixmap_bytes[], char *pixmask_bit
 	XWMGeometry(display, screen, Geometry, NULL, borderwidth, &mysizehints,
 				&mysizehints.x, &mysizehints.y,&mysizehints.width,&mysizehints.height, &dummy);
 
+#ifdef SIZE_SMALL
+	mysizehints.width = 60;
+	mysizehints.height = 60;
+#else
 	mysizehints.width = 64;
 	mysizehints.height = 64;
+#endif
 
 	win = XCreateSimpleWindow(display, Root, mysizehints.x, mysizehints.y,
 				mysizehints.width, mysizehints.height, borderwidth, fore_pix, back_pix);
